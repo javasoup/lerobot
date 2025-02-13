@@ -156,6 +156,6 @@ python lerobot/scripts/control_robot.py \
 
 Follow [previous tutorial](https://github.com/huggingface/lerobot/blob/main/examples/7_get_started_with_real_robot.md#4-train-a-policy-on-your-data) to train a policy on your data and run inference on your robot. You will need to adapt the code for Stretch.
 
-> TODO(rcadene, aliberts): Add already setup environment and policy yaml configuration files
+> You can find example configuration files for the environment and policy in `examples/stretch_env.yaml` and `examples/stretch_policy.yaml`.
 
 If you need help, please reach out on Discord in the channel `#stretch3-mobile-arm`.

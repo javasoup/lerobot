@@ -39,8 +39,7 @@ def safe_stop_image_writer(func):
 
 
 def image_array_to_image(image_array: np.ndarray) -> PIL.Image.Image:
-    # TODO(aliberts): handle 1 channel and 4 for depth images
-    if image_array.ndim == 3 and image_array.shape[0] in [1, 3]:
+    if image_array.ndim == 3 and image_array.shape[0] in [1, 3, 4]:
         # Transpose from pytorch convention (C, H, W) to (H, W, C)
         image_array = image_array.transpose(1, 2, 0)
     if image_array.dtype != np.uint8:

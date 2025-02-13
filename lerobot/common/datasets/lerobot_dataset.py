@@ -243,11 +243,13 @@ class LeRobotDatasetMetadata:
         self.episodes.append(episode_dict)
         append_jsonlines(episode_dict, self.root / EPISODES_PATH)
 
-        # TODO(aliberts): refactor stats in save_episodes
-        # image_sampling = int(self.fps / 2)  # sample 2 img/s for the stats
-        # ep_stats = compute_episode_stats(episode_buffer, self.features, episode_length, image_sampling=image_sampling)
-        # ep_stats = serialize_dict(ep_stats)
-        # append_jsonlines(ep_stats, self.root / STATS_PATH)
+            # TODO(aliberts): refactor stats in save_episodes
+            # image_sampling = int(self.fps / 2)  # sample 2 img/s for the stats
+            # ep_stats = compute_episode_stats(episode_buffer, self.features, episode_length, image_sampling=image_sampling)
+            # ep_stats = serialize_dict(ep_stats)
+            # append_jsonlines(ep_stats, self.root / STATS_PATH)
+
+        self.consolidated = False
 
     def write_video_info(self) -> None:
         """

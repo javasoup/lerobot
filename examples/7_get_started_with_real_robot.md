@@ -932,7 +932,7 @@ from lerobot.common.policies.act.modeling_act import ACTPolicy
 
 inference_time_s = 60
 fps = 30
-device = "cuda"  # TODO: On Mac, use "mps" or "cpu"
+device = "cuda"  # On Mac, use "mps" or "cpu"
 
 ckpt_path = "outputs/train/act_koch_test/checkpoints/last/pretrained_model"
 policy = ACTPolicy.from_pretrained(ckpt_path)

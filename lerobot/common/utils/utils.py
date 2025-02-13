@@ -200,5 +200,16 @@ def get_channel_first_image_shape(image_shape: tuple) -> tuple:
     return shape
 
 
+import argparse
+
+def parse_int_or_none(value) -> int | None:
+    if value.lower() == "none":
+        return None
+    try:
+        return int(value)
+    except ValueError as e:
+        raise argparse.ArgumentTypeError(f"Invalid int or None: {value}") from e
+
+
 def has_method(cls: object, method_name: str):
     return hasattr(cls, method_name) and callable(getattr(cls, method_name))
