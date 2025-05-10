@@ -20,6 +20,7 @@
 import logging
 import time
 import traceback
+import torch
 from contextlib import nullcontext
 from copy import copy
 from functools import cache
@@ -101,28 +102,35 @@ def is_headless():
         return True
 
 
-def predict_action(observation, policy, device, use_amp):
-    observation = copy(observation)
-    with (
-        torch.inference_mode(),
-        torch.autocast(device_type=device.type) if device.type == "cuda" and use_amp else nullcontext(),
-    ):
-        # Convert to pytorch format: channel first and float32 in [0,1] with batch dimension
-        for name in observation:
-            if "image" in name:
-                observation[name] = observation[name].type(torch.float32) / 255
-                observation[name] = observation[name].permute(2, 0, 1).contiguous()
-            observation[name] = observation[name].unsqueeze(0)
-            observation[name] = observation[name].to(device)
+def predict_action(observation_from_robot, policy, device, use_amp):
+    # It's safer to work with a copy if modifications are planned,
+    # but even better to build a new dict for policy input.
+    
+    policy_input_observation = {} # Create a new dictionary for inputs to the policy
 
-        # Compute the next action with the policy
-        # based on the current observation
-        action = policy.select_action(observation)
+    with torch.inference_mode(), \
+         (torch.autocast(device_type=device.type) if device.type == "cuda" and use_amp else nullcontext()):
 
-        # Remove batch dimension
+        for name, value in observation_from_robot.items(): # Iterate over original observation items
+            if "image" in name and isinstance(value, torch.Tensor):
+                # Process images: convert to float, normalize [0,1], permute, add batch dim, move to device
+                processed_value = value.type(torch.float32) / 255
+                processed_value = processed_value.permute(2, 0, 1).contiguous()
+                policy_input_observation[name] = processed_value.unsqueeze(0).to(device)
+            elif isinstance(value, torch.Tensor):
+                # Process other tensors (e.g., state): add batch dim, move to device
+                policy_input_observation[name] = value.unsqueeze(0).to(device)
+            else:
+                # For non-tensor data like 'task' (which is a list of strings you added),
+                # add it to the policy input as is.
+                # The policy (e.g., pi0fast) is responsible for handling/tokenizing it.
+                policy_input_observation[name] = value
+        
+        # Pass the prepared dictionary to the policy
+        action = policy.select_action(policy_input_observation)
+
+        # Post-process action (remove batch dim, move to CPU)
         action = action.squeeze(0)
-
-        # Move to cpu, if not already the case
         action = action.to("cpu")
 
     return action
@@ -250,6 +258,10 @@ def control_loop(
             observation, action = robot.teleop_step(record_data=True)
         else:
             observation = robot.capture_observation()
+            action = None
+
+            if single_task is not None:
+                observation['task'] = [single_task] 
 
             if policy is not None:
                 pred_action = predict_action(
@@ -266,9 +278,10 @@ def control_loop(
 
         # TODO(Steven): This should be more general (for RemoteRobot instead of checking the name, but anyways it will change soon)
         if (display_data and not is_headless()) or (display_data and robot.robot_type.startswith("lekiwi")):
-            for k, v in action.items():
-                for i, vv in enumerate(v):
-                    rr.log(f"sent_{k}_{i}", rr.Scalar(vv.numpy()))
+            if action is not None:
+                for k, v in action.items():
+                    for i, vv in enumerate(v):
+                        rr.log(f"sent_{k}_{i}", rr.Scalar(vv.numpy()))
 
             image_keys = [key for key in observation if "image" in key]
             for key in image_keys:

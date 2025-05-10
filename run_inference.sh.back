@@ -1,0 +1,48 @@
+#!/bin/bash
+
+# Script to run the lerobot control script with a pretrained policy for evaluation
+
+# --- Configuration ---
+ROBOT_TYPE="koch"
+# POLICY_TYPE is used if your pretrained_model/config.json does not specify the policy type,
+# or if you need to explicitly override it (less common for standard evaluation).
+POLICY_TYPE="act"
+#POLICY_PATH="outputs/train/act_koch_binky_1/pretrained_model"
+POLICY_PATH="javasoup/act_koch_binky_1"
+TASK_DESCRIPTION="Give binky to baby" # This is a good description for your eval dataset
+FPS=30
+# This will be the Hugging Face Hub repo ID for your *evaluation* dataset
+REPO_ID="javasoup/act_koch_binky_1"
+NUM_EPISODES=10
+EPISODE_TIME_S=40
+WARMUP_TIME_S=5 # You might want a few seconds for the robot to initialize
+RESET_TIME_S=10
+PUSH_TO_HUB=true
+NUM_IMAGE_WRITER_PROCESSES=1
+NUM_IMAGE_WRITER_THREADS_PER_CAMERA=4
+# Display data with Rerun.io during the evaluation
+DISPLAY_DATA=true
+
+# --- Execute the Command ---
+echo "Running lerobot control script with trained policy..."
+
+python lerobot/scripts/control_robot.py \
+  --robot.type=${ROBOT_TYPE} \
+  --control.type=record \
+  --control.fps=${FPS} \
+  --control.resume=true \
+  --control.single_task="${TASK_DESCRIPTION}" \
+  --control.repo_id=${REPO_ID} \
+  --control.tags='["evaluation", "act_koch_binky_1"]' \
+  --control.warmup_time_s=${WARMUP_TIME_S} \
+  --control.episode_time_s=${EPISODE_TIME_S} \
+  --control.reset_time_s=${RESET_TIME_S} \
+  --control.num_episodes=${NUM_EPISODES} \
+  --control.push_to_hub=${PUSH_TO_HUB} \
+#  --control.policy.type=${POLICY_TYPE} \
+  --control.policy.path=${POLICY_PATH} \
+  --control.display_data=${DISPLAY_DATA} \
+  --control.num_image_writer_processes=${NUM_IMAGE_WRITER_PROCESSES} \
+  --control.num_image_writer_threads_per_camera=${NUM_IMAGE_WRITER_THREADS_PER_CAMERA}
+
+echo "Script finished."

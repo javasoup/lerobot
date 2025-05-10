@@ -835,6 +835,7 @@ class PI0FAST(nn.Module):
                     action_dim=action_dim,
                     relaxed_decoding=self.config.relaxed_action_decoding,
                 ),
+                dtype=torch.float32, #Support for MPS
                 device=tokens.device,
             ).squeeze(0)
             for tok in action_tokens
